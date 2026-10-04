@@ -11,7 +11,7 @@ async def test_model_uses_bounded_no_thinking_request(article: Article) -> None:
     def handle(request: httpx.Request) -> httpx.Response:
         body = json.loads(request.content)
         assert body["think"] is False
-        assert body["options"]["num_ctx"] == 2048
+        assert body["options"]["num_ctx"] == 1024
         return httpx.Response(
             200,
             json={
