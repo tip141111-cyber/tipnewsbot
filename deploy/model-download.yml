@@ -1,0 +1,4 @@
+# Use only during the explicit model-download step; never for routine app startup.
+services:
+  model:
+    networks: [backend, outbound]

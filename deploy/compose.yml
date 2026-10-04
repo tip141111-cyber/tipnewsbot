@@ -1,0 +1,56 @@
+name: tipnews
+services:
+  app:
+    image: ${TIPNEWS_IMAGE:?Set an immutable GHCR image digest}
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.75
+    pids_limit: 96
+    tmpfs: [/tmp:size=16m,mode=1777]
+    environment:
+      TIPNEWS_TOKEN_FILE: /run/secrets/telegram_token
+      TIPNEWS_DATABASE_URL: sqlite+aiosqlite:////app/data/tipnews.db
+      TIPNEWS_OLLAMA_URL: http://model:11434
+      TIPNEWS_OLLAMA_MODEL: qwen3:0.6b
+      TIPNEWS_TIMEZONE: Europe/Moscow
+      TIPNEWS_DIGEST_TIME: "08:00"
+    secrets: [telegram_token]
+    volumes: [app_data:/app/data]
+    networks: [backend, outbound]
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "3"}
+  model:
+    image: ${TIPNEWS_MODEL_IMAGE:?Set a tested Ollama image digest}
+    restart: unless-stopped
+    init: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 800m
+    cpus: 2.0
+    pids_limit: 96
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: 30s
+      OLLAMA_CONTEXT_LENGTH: "2048"
+    volumes: [model_data:/root/.ollama]
+    networks: [backend]
+    logging:
+      driver: json-file
+      options: {max-size: "5m", max-file: "2"}
+networks:
+  backend:
+    internal: true
+  outbound: {}
+volumes:
+  app_data: {}
+  model_data: {}
+secrets:
+  telegram_token:
+    file: ${TIPNEWS_TOKEN_PATH:?Set the absolute server secret file path}

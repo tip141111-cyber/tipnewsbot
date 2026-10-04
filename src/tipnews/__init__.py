@@ -1,0 +1,1 @@
+"""tipnews application package."""

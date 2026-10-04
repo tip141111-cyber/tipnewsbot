@@ -1,0 +1,61 @@
+# Approved endpoints only; no user-submitted URLs.
+[[sources]]
+id = "github"
+name = "GitHub Changelog"
+url = "https://github.blog/changelog/feed/"
+topic = "it"
+hosts = ["github.blog"]
+
+[[sources]]
+id = "kubernetes"
+name = "Kubernetes"
+url = "https://kubernetes.io/feed.xml"
+topic = "it"
+hosts = ["kubernetes.io"]
+
+[[sources]]
+id = "securitylab"
+name = "SecurityLab"
+url = "https://www.securitylab.ru/_Services/Export/RSS/news/"
+topic = "security"
+hosts = ["www.securitylab.ru", "securitylab.ru"]
+
+[[sources]]
+id = "cbr"
+name = "Банк России"
+url = "https://www.cbr.ru/rss/RssPress"
+topic = "economy"
+hosts = ["www.cbr.ru", "cbr.ru"]
+priority = 1
+
+[[sources]]
+id = "bbc-world"
+name = "BBC News"
+url = "https://feeds.bbci.co.uk/news/world/rss.xml"
+topic = "world"
+hosts = ["feeds.bbci.co.uk"]
+
+[[sources]]
+id = "eschulmann"
+name = "Екатерина Шульман · Статус"
+url = "https://teletype.in/rss/eschulmann"
+topic = "world"
+hosts = ["teletype.in"]
+lookback_hours = 168
+latest_only = true
+priority = 1
+
+[[sources]]
+id = "astrapress"
+name = "ASTRA"
+url = "https://t.me/s/astrapress"
+topic = "world"
+hosts = ["t.me"]
+kind = "telegram"
+
+[[sources]]
+id = "ryazan"
+name = "7info"
+url = "https://7info.ru/ryazan/feed/"
+topic = "ryazan"
+hosts = ["7info.ru"]
