@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///data/tipnews.db"
     sources_file: Path = Path("config/sources.toml")
     timezone: str = "Europe/Moscow"
-    digest_time: time = time(8, 0)
+    digest_time: time = time(7, 15)
     ollama_url: str = "http://127.0.0.1:11434"
     ollama_model: str = "qwen3:0.6b"
     weather_enabled: bool = True

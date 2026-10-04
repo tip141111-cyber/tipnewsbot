@@ -11,6 +11,7 @@ class Store(Protocol):
         since: datetime,
         reuse_day: str | None = None,
         *,
+        until: datetime | None = None,
         source_id: str | None = None,
         latest_only: bool = False,
     ) -> list[Article]: ...

@@ -17,7 +17,7 @@ services:
       TIPNEWS_OLLAMA_URL: http://model:11434
       TIPNEWS_OLLAMA_MODEL: qwen3:0.6b
       TIPNEWS_TIMEZONE: Europe/Moscow
-      TIPNEWS_DIGEST_TIME: "08:00"
+      TIPNEWS_DIGEST_TIME: "07:15"
     secrets: [telegram_token]
     volumes: [app_data:/app/data]
     networks: [backend, outbound]

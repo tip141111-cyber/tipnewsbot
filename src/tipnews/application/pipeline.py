@@ -60,12 +60,14 @@ class Pipeline:
         candidates = await self.store.candidates(
             scheduled_at - timedelta(hours=24),
             reuse_day=reuse_day,
+            until=scheduled_at,
         )
         candidates = [article for article in candidates if article.source_id not in weekly]
         for source in weekly.values():
             latest = await self.store.candidates(
                 scheduled_at - timedelta(hours=source.lookback_hours),
                 reuse_day=reuse_day,
+                until=scheduled_at,
                 source_id=source.id,
                 latest_only=True,
             )

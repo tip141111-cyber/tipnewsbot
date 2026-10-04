@@ -55,6 +55,7 @@ class SqlStore:
         since: datetime,
         reuse_day: str | None = None,
         *,
+        until: datetime | None = None,
         source_id: str | None = None,
         latest_only: bool = False,
     ) -> list[Article]:
@@ -72,6 +73,10 @@ class SqlStore:
                 .order_by(ArticleRow.published_at.desc())
                 .limit(1 if latest_only else 500)
             )
+            if until is not None:
+                article_query = article_query.where(
+                    ArticleRow.published_at <= int(until.timestamp())
+                )
             if source_id is not None:
                 article_query = article_query.where(ArticleRow.source_id == source_id)
             rows = await session.scalars(article_query)
