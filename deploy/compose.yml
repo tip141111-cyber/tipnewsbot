@@ -10,7 +10,7 @@ services:
     mem_limit: 256m
     cpus: 0.75
     pids_limit: 96
-    tmpfs: [/tmp:size=16m,mode=1777]
+    tmpfs: ["/tmp:size=16m,mode=1777"]
     environment:
       TIPNEWS_TOKEN_FILE: /run/secrets/telegram_token
       TIPNEWS_DATABASE_URL: sqlite+aiosqlite:////app/data/tipnews.db
