@@ -143,9 +143,9 @@ class RssReader:
             title = plain_text(str(entry.get("title", "")))[:300]
             text = plain_text(str(entry.get("summary", "")))[:6000]
             if source.latest_only and entry.get("content"):
-                text = plain_text(" ".join(
-                    str(part.get("value", "")) for part in entry["content"]
-                ))[:6000]
+                text = plain_text(
+                    " ".join(str(part.get("value", "")) for part in entry["content"])
+                )[:6000]
             if len(text) < 60 or not title:
                 continue
             articles.append(

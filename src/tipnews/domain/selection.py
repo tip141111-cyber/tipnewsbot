@@ -12,6 +12,7 @@ def select_articles(articles: list[Article], limit: int = 10) -> list[Article]:
     topics: Counter[str] = Counter()
     sources: Counter[str] = Counter()
     ordered = sorted(articles, key=lambda a: (a.priority, a.published_at), reverse=True)
+
     def add(article: Article) -> bool:
         if topics[article.topic] >= 2 or sources[article.source_id] >= 2:
             return False

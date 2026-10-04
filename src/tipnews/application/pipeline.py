@@ -90,8 +90,7 @@ class Pipeline:
                     )
                     if article.source_id in weekly:
                         summary = (
-                            f"Анонс выпуска: {article.title}. "
-                            "Подробности — по ссылке на источник."
+                            f"Анонс выпуска: {article.title}. Подробности — по ссылке на источник."
                         )
                     else:
                         continue
