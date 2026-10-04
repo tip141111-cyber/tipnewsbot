@@ -93,6 +93,26 @@ def build_router(
         await store.set_active(message.chat.id, False)
         await message.answer("Подписка приостановлена. /start — возобновить.")
 
+    @router.message(Command("id"))
+    async def user_id(message: Message) -> None:
+        if message.from_user:
+            await message.answer(f"Ваш Telegram ID: <code>{message.from_user.id}</code>")
+
+    @router.message(Command("stats"))
+    async def stats(message: Message) -> None:
+        if not message.from_user or not settings.is_admin(message.from_user.id):
+            return
+        total, active, topics = await store.subscriber_stats()
+        paused = total - active
+        rows = [f"Пользователей: {total}", f"Активных подписок: {active}", f"На паузе: {paused}"]
+        rows.append(
+            "\n".join(
+                f"{TOPIC_NAMES[topic]}: {count}"
+                for topic, count in sorted(topics.items(), key=lambda item: TOPIC_NAMES[item[0]])
+            )
+        )
+        await message.answer("<b>Статистика tipnews</b>\n" + "\n".join(rows))
+
     @router.message(Command("topics"))
     async def topics(message: Message) -> None:
         await message.answer("Рубрики", reply_markup=await keyboard(message.chat.id))

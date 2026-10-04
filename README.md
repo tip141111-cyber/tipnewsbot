@@ -22,7 +22,7 @@ start `uv run tipnews run`. Do not paste credentials into commands, issues or ch
 Configuration uses `TIPNEWS_` environment variables; `.env` is not loaded implicitly.
 The example file contains only variable names and non-secret defaults.
 
-Commands: `/start`, `/stop`, `/topics`, `/digest`, `/sources`, `/weather`. A user must start the
+Commands: `/start`, `/stop`, `/topics`, `/digest`, `/sources`, `/weather`, `/id`. A user must start the
 bot to opt in. `/digest` reads the cached edition, never starts inference.
 Generation starts 30 minutes before the configured daily delivery time (07:15
 Europe/Moscow by default). Missed preparation retries for four hours. No model
@@ -41,6 +41,10 @@ Forecasts are cached for one hour and include temperatures at 08:00, 14:00 and
 probability and maximum wind speed. Set `TIPNEWS_WEATHER_ENABLED=false` to disable.
 The free Open-Meteo endpoint is intended for non-commercial use and requires
 attribution, included in bot messages.
+
+Set `TIPNEWS_ADMIN_IDS` to a comma-separated list of Telegram user IDs. Admins
+can use `/stats` to see subscriber totals and active topic counts; `/id` shows
+the current user's own Telegram ID.
 
 ## Architecture and deployment
 

@@ -177,6 +177,16 @@ class SqlStore:
             row = await session.get(SubscriberRow, chat_id)
             return {Topic(t) for t in json.loads(row.topics)} if row else set()
 
+    async def subscriber_stats(self) -> tuple[int, int, dict[Topic, int]]:
+        async with self.sessions() as session:
+            rows = list(await session.scalars(select(SubscriberRow)))
+        topics: dict[Topic, int] = {}
+        for row in rows:
+            for value in json.loads(row.topics):
+                topic = Topic(value)
+                topics[topic] = topics.get(topic, 0) + (1 if row.active else 0)
+        return len(rows), sum(1 for row in rows if row.active), topics
+
     async def set_active(self, chat_id: int, active: bool) -> None:
         async with self.write_lock, self.sessions.begin() as session:
             await session.execute(

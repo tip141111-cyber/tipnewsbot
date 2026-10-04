@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     feed_max_bytes: int = Field(default=4 * 1024 * 1024, ge=1024, le=8 * 1024 * 1024)
     retention_days: int = Field(default=30, ge=7)
     heartbeat_file: Path = Path("data/heartbeat")
+    admin_ids: str = ""
 
     @field_validator("timezone")
     @classmethod
@@ -34,3 +35,6 @@ class Settings(BaseSettings):
         if value.tzinfo is not None:
             raise ValueError("Use a local HH:MM time and the timezone setting")
         return value
+
+    def is_admin(self, user_id: int) -> bool:
+        return str(user_id) in {item.strip() for item in self.admin_ids.split(",") if item.strip()}
