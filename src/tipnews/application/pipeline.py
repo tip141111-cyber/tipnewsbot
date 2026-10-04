@@ -89,7 +89,10 @@ class Pipeline:
                         "summary_failed article=%s error=%s", article.id, type(exc).__name__
                     )
                     if article.source_id in weekly:
-                        summary = f"Анонс выпуска: {article.title}. Подробности — по ссылке на источник."
+                        summary = (
+                            f"Анонс выпуска: {article.title}. "
+                            "Подробности — по ссылке на источник."
+                        )
                     else:
                         continue
             if article.source_id in weekly:
