@@ -66,6 +66,8 @@ async def run_bot(settings: Settings) -> None:
                         BotCommand(command="topics", description="Выбрать рубрики"),
                         BotCommand(command="sources", description="Источники новостей"),
                         BotCommand(command="stop", description="Приостановить подписку"),
+                        BotCommand(command="id", description="Показать мой Telegram ID"),
+                        BotCommand(command="stats", description="Статистика подписчиков"),
                     ]
                 )
                 dispatcher = Dispatcher()
