@@ -54,9 +54,9 @@ Runtime: separate application and model containers, SQLite volume, no public
 application/model ports. The Ollama model must be provisioned explicitly.
 
 Enabled feeds: GitHub Changelog, Kubernetes, SecurityLab, Bank of Russia,
-BBC World, Ekaterina Schulmann's Teletype RSS, public ASTRA Telegram posts and
-7info Ryazan. The politics block includes BBC, Schulmann and ASTRA; article dates
-still apply, so an older Status episode is not presented as today's news.
-A dedicated financial-market feed remains pending
-validation; disabled topics are not offered to subscribers.
+BBC World, Ekaterina Schulmann's Teletype RSS, public ASTRA Telegram posts,
+7info Ryazan and Smart-Lab market news. The politics block includes BBC,
+Schulmann and ASTRA; article dates still apply, so an older Status episode is
+not presented as today's news. Smart-Lab fills the Markets rubric.
+Disabled topics are not offered to subscribers.
 Production deployment and model quality/resource acceptance are not yet complete.

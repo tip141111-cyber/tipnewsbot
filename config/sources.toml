@@ -59,3 +59,11 @@ name = "7info"
 url = "https://7info.ru/ryazan/feed/"
 topic = "ryazan"
 hosts = ["7info.ru"]
+
+[[sources]]
+id = "smart-lab"
+name = "Smart-Lab"
+url = "https://smart-lab.ru/news/rss"
+topic = "markets"
+hosts = ["smart-lab.ru"]
+priority = 1
