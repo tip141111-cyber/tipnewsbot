@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, tzinfo
 from zoneinfo import ZoneInfo
 
 from tipnews.application.delivery import deliver_one
@@ -12,7 +12,7 @@ from tipnews.ports.storage import Store
 logger = logging.getLogger(__name__)
 
 
-def local_at(day: date, value: time, timezone: ZoneInfo) -> datetime:
+def local_at(day: date, value: time, timezone: tzinfo | None) -> datetime:
     return datetime.combine(day, value, timezone)
 
 
