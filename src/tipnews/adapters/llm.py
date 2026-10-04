@@ -43,7 +43,7 @@ class OllamaSummarizer:
                     },
                     {"role": "user", "content": text},
                 ],
-                "options": {"num_ctx": 2048, "num_predict": 240, "temperature": 0, "num_thread": 2},
+                "options": {"num_ctx": 1024, "num_predict": 240, "temperature": 0, "num_thread": 2},
             },
         )
         response.raise_for_status()

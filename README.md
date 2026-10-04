@@ -52,6 +52,8 @@ GitHub Actions runs quality, security, migration and image smoke checks, then
 publishes a commit-tagged GHCR image on `main`. Production must use its digest.
 Runtime: separate application and model containers, SQLite volume, no public
 application/model ports. The Ollama model must be provisioned explicitly.
+The production profile uses a 1024-token context and 1200 MiB model limit for
+the 2 GiB VPS; host swap is required when other services share the machine.
 
 Enabled feeds: GitHub Changelog, Kubernetes, SecurityLab, Bank of Russia,
 BBC World, Ekaterina Schulmann's Teletype RSS, public ASTRA Telegram posts,
