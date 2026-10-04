@@ -24,10 +24,10 @@ The example file contains only variable names and non-secret defaults.
 
 Commands: `/start`, `/stop`, `/topics`, `/digest`, `/sources`, `/weather`, `/id`. A user must start the
 bot to opt in. `/digest` reads the cached edition, never starts inference.
-Generation starts 30 minutes before the configured daily delivery time (07:15
-Europe/Moscow by default). Missed preparation retries for four hours. No model
+The first startup prepares a release immediately. Afterwards preparation runs at
+00:00 Europe/Moscow for the preceding calendar day and delivery runs at 07:15.
+Weather is refreshed at 07:10 and attached to the queued delivery. No model
 means no generated digest; source excerpts are never silently labelled AI summaries.
-The daily news window ends at 07:15 and covers the preceding 24 hours.
 
 Summaries must pass a Russian-language check. Non-Russian output triggers one
 translation retry, then the article is omitted if the check still fails.

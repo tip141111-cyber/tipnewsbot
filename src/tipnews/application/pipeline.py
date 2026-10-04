@@ -50,7 +50,13 @@ class Pipeline:
                 logger.warning("source_failed source=%s error=%s", source.id, type(exc).__name__)
         return total
 
-    async def prepare(self, scheduled_at: datetime, *, refresh: bool = False) -> int:
+    async def prepare(
+        self,
+        scheduled_at: datetime,
+        *,
+        deliver_at: datetime | None = None,
+        refresh: bool = False,
+    ) -> int:
         day = scheduled_at.date().isoformat()
         existing = await self.store.digest(day)
         if existing is not None and not refresh:
@@ -115,8 +121,19 @@ class Pipeline:
             if existing is not None:
                 await self.store.refresh_digest(day, items)
             else:
-                await self.store.publish(day, items, int(scheduled_at.timestamp()))
+                delivery_time = deliver_at or scheduled_at
+                await self.store.publish(day, items, int(delivery_time.timestamp()))
             logger.info("digest_published day=%s items=%d", day, len(items))
         else:
             logger.warning("digest_not_ready day=%s candidates=%d", day, len(articles))
         return len(items)
+
+    async def refresh_weather(self, day: date) -> bool:
+        existing = await self.store.digest(day.isoformat())
+        if existing is None or self.weather is None:
+            return False
+        news = [item for item in existing if item.topic != Topic.WEATHER]
+        items = await self.with_weather(news, day)
+        await self.store.refresh_digest(day.isoformat(), items)
+        logger.info("weather_refreshed day=%s", day.isoformat())
+        return True

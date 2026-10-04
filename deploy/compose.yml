@@ -18,6 +18,7 @@ services:
       TIPNEWS_OLLAMA_MODEL: qwen3:0.6b
       TIPNEWS_TIMEZONE: Europe/Moscow
       TIPNEWS_DIGEST_TIME: "07:15"
+      TIPNEWS_WEATHER_REFRESH_TIME: "07:10"
       TIPNEWS_ADMIN_IDS: ${TIPNEWS_ADMIN_IDS:-}
     secrets: [telegram_token]
     volumes: [app_data:/app/data]

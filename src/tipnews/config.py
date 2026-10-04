@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     sources_file: Path = Path("config/sources.toml")
     timezone: str = "Europe/Moscow"
     digest_time: time = time(7, 15)
+    weather_refresh_time: time = time(7, 10)
     ollama_url: str = "http://127.0.0.1:11434"
     ollama_model: str = "qwen3:0.6b"
     weather_enabled: bool = True
