@@ -37,6 +37,11 @@ translation retry, then the article is omitted if the check still fails.
 `uv run tipnews prepare --refresh` rebuilds today's cached edition without
 resending deliveries already sent. `uv run tipnews preview` displays the edition.
 
+For a full replacement with newly generated summaries, use `tipnews prepare --rebuild`.
+It bypasses the summary cache and removes old articles from the existing edition;
+if any selected summary fails, the previous edition remains intact. It does not resend
+delivered messages or create an edition if none exists yet.
+
 Ryazan weather comes directly from Open-Meteo, not the language model. `/weather`
 returns today's forecast in Europe/Moscow; `/digest` includes it before news.
 Forecasts are cached for one hour and include temperatures at 08:00, 14:00 and

@@ -57,10 +57,13 @@ class Pipeline:
         deliver_at: datetime | None = None,
         refresh: bool = False,
         resume: bool = False,
+        rebuild: bool = False,
     ) -> int:
         day = scheduled_at.date().isoformat()
         existing = await self.store.digest(day)
-        if existing is not None and not (refresh or resume):
+        if rebuild and existing is None:
+            raise ValueError("Full rebuild requires an existing edition; no delivery is created")
+        if existing is not None and not (refresh or resume or rebuild):
             return len(existing)
         reuse_day = day if existing is not None else None
         previous = {item.article_id: item for item in existing or [] if item.topic != Topic.WEATHER}
@@ -81,9 +84,11 @@ class Pipeline:
             )
             candidates.extend(replace(article, priority=source.priority) for article in latest)
         articles = select_articles(candidates)
+        if rebuild and not articles:
+            raise ValueError("No articles available for rebuild; previous edition retained")
         items = []
         for article in articles:
-            summary = await self.store.cached_summary(article.id, self.version)
+            summary = None if rebuild else await self.store.cached_summary(article.id, self.version)
             if summary is None:
                 try:
                     summary_article = article
@@ -96,6 +101,13 @@ class Pipeline:
                     logger.warning(
                         "summary_failed article=%s error=%s", article.id, type(exc).__name__
                     )
+                    if rebuild:
+                        logger.error(
+                            "digest_rebuild_aborted day=%s previous_edition_retained=true", day
+                        )
+                        raise RuntimeError(
+                            "Full rebuild failed; previous edition retained"
+                        ) from None
                     if article.id in previous:
                         items.append(previous[article.id])
                         continue
@@ -118,7 +130,7 @@ class Pipeline:
                     article.source_name,
                 )
             )
-        if existing is not None:
+        if existing is not None and not rebuild:
             # Replace matching articles; never discard a valid old summary on model failure.
             previous.update({item.article_id: item for item in items})
             items = list(previous.values())[:10]

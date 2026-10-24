@@ -1,6 +1,8 @@
 from dataclasses import replace
 from datetime import UTC, date, datetime, timedelta
 
+import pytest
+
 from tipnews.adapters.persistence.repository import SqlStore
 from tipnews.application.pipeline import Pipeline
 from tipnews.domain.models import Article, DigestItem, Source, Topic
@@ -123,3 +125,86 @@ async def test_pipeline_refresh_updates_only_unsent_delivery(
     assert pending is not None and pending.chat_id != sent.chat_id
     assert "Новая версия" in pending.text
     assert await store.claim_delivery(int(now.timestamp())) is None
+
+
+async def test_rebuild_removes_old_items_and_bypasses_matching_cache(
+    store: SqlStore, article: Article
+) -> None:
+    now = datetime.now(UTC)
+    old = DigestItem(
+        "old", Topic.IT, "Old", "Старый пересказ от предыдущей модели.", article.url, "Test"
+    )
+    await store.subscribe(42, {Topic.IT})
+    await store.subscribe(43, {Topic.IT})
+    await store.publish(now.date().isoformat(), [old], 0)
+    sent = await store.claim_delivery(int(now.timestamp()))
+    assert sent is not None
+    await store.finish_delivery(sent.id, "sent")
+    await store.add_articles([article])
+    model = NewModel()
+    pipeline = Pipeline(store, Reader(), model, [], "gemini")
+    await store.save_summary(article.id, "Старый кэш с совпадающей версией.", pipeline.version)
+    assert await pipeline.prepare(now, rebuild=True) == 1
+    assert model.calls == 1
+    edition = await store.digest(now.date().isoformat())
+    assert edition is not None and [item.article_id for item in edition] == [article.id]
+    assert edition[0].summary.startswith("Новая версия")
+    pending = await store.claim_delivery(int(now.timestamp()))
+    assert pending is not None and pending.chat_id != sent.chat_id
+    assert "Новая версия" in pending.text and "Старый" not in pending.text
+    assert await store.claim_delivery(int(now.timestamp())) is None
+
+
+async def test_rebuild_failure_never_publishes_partial_or_weekly_fallback(
+    store: SqlStore, article: Article
+) -> None:
+    now = datetime.now(UTC)
+    old = DigestItem(
+        "old", Topic.IT, "Old", "Старый пересказ от предыдущей модели.", article.url, "Test"
+    )
+    await store.subscribe(42, {Topic.IT})
+    await store.publish(now.date().isoformat(), [old], 0)
+    other = replace(
+        article,
+        id="weekly",
+        source_id="weekly",
+        topic=Topic.WORLD,
+        title="Weekly programme with separate subject",
+    )
+    await store.add_articles([article, other])
+    weekly = Source(
+        "weekly", "Weekly", "https://example.org", Topic.WORLD, ("example.org",), latest_only=True
+    )
+
+    class PartialModel(NewModel):
+        async def summarize(self, candidate: Article) -> str:
+            if candidate.id == "weekly":
+                raise TimeoutError
+            return await super().summarize(candidate)
+
+    with pytest.raises(RuntimeError, match="previous edition retained"):
+        await Pipeline(store, Reader(), PartialModel(), [weekly], "gemini").prepare(
+            now, rebuild=True
+        )
+    assert await store.digest(now.date().isoformat()) == [old]
+    pending = await store.claim_delivery(int(now.timestamp()))
+    assert pending is not None and "Старый пересказ" in pending.text
+
+
+async def test_rebuild_cannot_create_new_delivery_or_erase_empty_selection(store: SqlStore) -> None:
+    now = datetime.now(UTC)
+    pipeline = Pipeline(store, Reader(), Model(), [], "gemini")
+    with pytest.raises(ValueError, match="existing edition"):
+        await pipeline.prepare(now, rebuild=True)
+    old = DigestItem(
+        "old",
+        Topic.IT,
+        "Old",
+        "Старый пересказ от предыдущей модели.",
+        "https://example.org",
+        "Test",
+    )
+    await store.publish(now.date().isoformat(), [old], 0)
+    with pytest.raises(ValueError, match="No articles"):
+        await pipeline.prepare(now, rebuild=True)
+    assert await store.digest(now.date().isoformat()) == [old]

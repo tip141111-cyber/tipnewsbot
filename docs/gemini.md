@@ -84,6 +84,15 @@ retries every 15 minutes and reuses successful summaries to recover partial edit
 Startup and catch-up generation use the previous calendar day. A late catch-up
 edition is due immediately on its own date, not the following day.
 
+For a complete provider/style replacement use `tipnews prepare --rebuild`. This
+requires today's edition to already exist. It collects current feeds, selects up
+to ten articles and generates every summary again, bypassing the summary cache.
+Only after all selected articles succeed does it replace the edition and pending
+messages. It never carries over old articles or a title-only weekly fallback. Any
+generation failure or empty selection aborts replacement and leaves the old edition
+and queued messages intact. Sent/uncertain messages are never requeued. Inspect the
+new edition with `tipnews preview` or `/digest`; existing Telegram messages are not edited.
+
 The existing GitHub workflow tests and publishes GHCR images. It does not contain a
 server deployment step. Verify the separate server updater before assuming a push
 has activated Gemini. Health checks only prove the event loop is alive, not successful

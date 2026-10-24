@@ -23,10 +23,12 @@ async def collect(settings: Settings) -> None:
         print(json.dumps({"inserted": count}))
 
 
-async def prepare(settings: Settings, *, refresh: bool = False) -> None:
+async def prepare(settings: Settings, *, refresh: bool = False, rebuild: bool = False) -> None:
     async with components(settings) as (_, pipeline):
         await pipeline.collect()
-        count = await pipeline.prepare(datetime.now(ZoneInfo(settings.timezone)), refresh=refresh)
+        count = await pipeline.prepare(
+            datetime.now(ZoneInfo(settings.timezone)), refresh=refresh, rebuild=rebuild
+        )
         if not count:
             raise RuntimeError("No digest prepared; inspect source/model events")
         print(json.dumps({"digest_items": count}))
@@ -51,10 +53,18 @@ def main() -> None:
         "command",
         choices=["run", "migrate", "collect", "prepare", "preview", "weather", "check", "health"],
     )
-    parser.add_argument(
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
         "--refresh", action="store_true", help="Обновить текущий выпуск без повторной рассылки"
     )
+    mode.add_argument(
+        "--rebuild",
+        action="store_true",
+        help="Полностью заменить существующий выпуск новыми пересказами без старых текстов",
+    )
     args = parser.parse_args()
+    if args.rebuild and args.command != "prepare":
+        parser.error("--rebuild is only available for prepare")
     configure_logging()
     try:
         settings = Settings()
@@ -76,7 +86,7 @@ def main() -> None:
         elif args.command == "collect":
             asyncio.run(collect(settings))
         elif args.command == "prepare":
-            asyncio.run(prepare(settings, refresh=args.refresh))
+            asyncio.run(prepare(settings, refresh=args.refresh, rebuild=args.rebuild))
         elif args.command == "preview":
             asyncio.run(preview(settings))
         elif args.command == "weather":
