@@ -9,6 +9,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.types import BotCommand
 from filelock import FileLock
 
+from tipnews.adapters.gemini import GeminiSummarizer
 from tipnews.adapters.llm import SYSTEM_PROMPT, OllamaSummarizer
 from tipnews.adapters.persistence.database import create_engine
 from tipnews.adapters.persistence.repository import SqlStore
@@ -18,6 +19,7 @@ from tipnews.adapters.weather import OpenMeteoWeather
 from tipnews.application.pipeline import Pipeline
 from tipnews.config import Settings
 from tipnews.jobs.runner import delivery_loop, generation_loop
+from tipnews.ports import Summarizer
 
 
 @asynccontextmanager
@@ -31,12 +33,25 @@ async def components(settings: Settings) -> AsyncIterator[tuple[SqlStore, Pipeli
             httpx.AsyncClient(timeout=180, trust_env=False) as model_client,
         ):
             store = SqlStore(engine)
+            summarizer: Summarizer
+            if settings.llm_provider == "gemini":
+                gemini = GeminiSummarizer(model_client, settings, store)
+                summarizer, version = gemini, gemini.version
+            else:
+                summarizer = OllamaSummarizer(
+                    model_client, settings.ollama_url, settings.ollama_model
+                )
+                version = (
+                    "ollama:ctx1024:predict240:temperature0:chunk1600:validation-v2:"
+                    + settings.ollama_model
+                    + SYSTEM_PROMPT
+                )
             pipeline = Pipeline(
                 store,
                 RssReader(feed_client, settings.feed_max_bytes),
-                OllamaSummarizer(model_client, settings.ollama_url, settings.ollama_model),
+                summarizer,
                 load_sources(settings.sources_file),
-                settings.ollama_model + SYSTEM_PROMPT,
+                version,
                 OpenMeteoWeather(feed_client) if settings.weather_enabled else None,
             )
             yield store, pipeline

@@ -62,7 +62,9 @@ jobs:
           TIPNEWS_IMAGE: tipnews:test
           TIPNEWS_MODEL_IMAGE: ollama/ollama:test
           TIPNEWS_TOKEN_PATH: /tmp/absent-tipnews-token
-        run: docker compose -f deploy/compose.yml config --quiet
+        run: |
+          docker compose -f deploy/compose.yml config --quiet
+          docker compose -f deploy/compose.gemini.yml config --quiet
       - name: Publish immutable revision
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:

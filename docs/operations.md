@@ -2,7 +2,7 @@
 
 ## Required before production
 
-1. Complete the model RAM/quality benchmark under the proposed 800 MiB limit.
+1. For Ollama, complete the model RAM/quality benchmark under the configured 1200 MiB limit.
 2. Choose an absolute deployment directory and create a dedicated deploy identity.
 3. Install a root-owned forced-command wrapper; accept only the approved GHCR
    repository and a sha256 digest. Do not pass arbitrary SSH commands from CI.
@@ -18,6 +18,9 @@ and publish without production SSH secrets. Never copy the interactive administr
 key into GitHub. No remote write has been performed during project scaffolding.
 
 ## Secrets
+
+Gemini activation uses the separate [Gemini runbook](gemini.md), including migration
+0002 and an explicit provider switch. Existing Ollama deployment remains the default.
 
 The token is a mounted file under `/run/secrets`, not an image layer or build arg.
 The runtime UID 10001 must have read access to that file; do not make it world-readable.

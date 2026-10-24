@@ -56,12 +56,14 @@ class Pipeline:
         *,
         deliver_at: datetime | None = None,
         refresh: bool = False,
+        resume: bool = False,
     ) -> int:
         day = scheduled_at.date().isoformat()
         existing = await self.store.digest(day)
-        if existing is not None and not refresh:
+        if existing is not None and not (refresh or resume):
             return len(existing)
-        reuse_day = day if refresh else None
+        reuse_day = day if existing is not None else None
+        previous = {item.article_id: item for item in existing or [] if item.topic != Topic.WEATHER}
         weekly = {source.id: source for source in self.sources if source.latest_only}
         candidates = await self.store.candidates(
             scheduled_at - timedelta(hours=24),
@@ -94,6 +96,9 @@ class Pipeline:
                     logger.warning(
                         "summary_failed article=%s error=%s", article.id, type(exc).__name__
                     )
+                    if article.id in previous:
+                        items.append(previous[article.id])
+                        continue
                     if article.source_id in weekly:
                         summary = (
                             f"Анонс выпуска: {article.title}. Подробности — по ссылке на источник."
@@ -114,13 +119,14 @@ class Pipeline:
                 )
             )
         if existing is not None:
-            known = {item.article_id for item in existing}
-            items = existing + [item for item in items if item.article_id not in known]
+            # Replace matching articles; never discard a valid old summary on model failure.
+            previous.update({item.article_id: item for item in items})
+            items = list(previous.values())[:10]
         if items:
             items = await self.with_weather(items, scheduled_at.date())
-            if existing is not None:
+            if existing is not None and items != existing:
                 await self.store.refresh_digest(day, items)
-            else:
+            elif existing is None:
                 delivery_time = deliver_at or scheduled_at
                 await self.store.publish(day, items, int(delivery_time.timestamp()))
             logger.info("digest_published day=%s items=%d", day, len(items))

@@ -11,12 +11,17 @@ An RSS excerpt is not presented as a summary of an unread full article.
 
 Modular monolith: domain values and selection policies; application use cases;
 ports for sources, storage, inference and delivery; adapters for RSS, SQLAlchemy,
-Ollama and Telegram. One active application instance initially. Ollama runs in a
+Ollama/Gemini and Telegram. One active application instance initially. Ollama runs in a
 separate container with no published port. No Redis, Celery or Kubernetes required.
 
 Sources -> bounded RSS fetch -> normalized articles -> SQL database -> bounded
-daily selection -> sequential summarization -> immutable digest -> durable outbox.
+daily selection -> sequential summarization -> cached digest -> durable outbox.
 User commands only read cached digests and change subscriptions.
+
+Gemini is opt-in and uses outbound HTTPS with a private API key. Its persisted daily
+request counter is independent of delivery state. Explicit refresh replaces cached
+article text and pending messages, never requeues sent or uncertain deliveries.
+See [Gemini operations](gemini.md) for activation and backward-compatible rollback.
 
 SQLite WAL and explicit Alembic migrations initially. Repository methods own
 transactions. No session is shared between asynchronous tasks. PostgreSQL and

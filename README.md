@@ -1,6 +1,6 @@
 # tipnews
 
-Public Telegram news digests with local Qwen summarization, topic subscriptions,
+Public Telegram news digests with Ollama/Qwen or Gemini API summarization, topic subscriptions,
 explicit source links, durable delivery state and resource-bounded RSS collection.
 
 ## Development
@@ -24,10 +24,13 @@ The example file contains only variable names and non-secret defaults.
 
 Commands: `/start`, `/stop`, `/topics`, `/digest`, `/sources`, `/weather`, `/id`. A user must start the
 bot to opt in. `/digest` reads the cached edition, never starts inference.
-The first startup prepares a release immediately. Afterwards preparation runs at
+The first startup prepares a release immediately for the preceding calendar day.
+Late catch-up releases are delivered the same day. Afterwards preparation runs at
 00:00 Europe/Moscow for the preceding calendar day and delivery runs at 07:15.
-Weather is refreshed at 07:10 and attached to the queued delivery. No model
-means no generated digest; source excerpts are never silently labelled AI summaries.
+Weather is refreshed at 07:10 and attached to the queued delivery. Partial editions
+are retried every 15 minutes before delivery using cached successful summaries.
+No model means no generated news summaries; the weekly source may have an explicitly
+labelled title-only announcement. Source excerpts are never silently labelled AI summaries.
 
 Summaries must pass a Russian-language check. Non-Russian output triggers one
 translation retry, then the article is omitted if the check still fails.
@@ -51,6 +54,7 @@ the current user's own Telegram ID.
 - [Architecture and acceptance](docs/architecture.md)
 - [Decisions and pending setup](docs/decisions.md)
 - [Deployment runbook](docs/operations.md)
+- [Gemini configuration, limits, activation and rollback](docs/gemini.md)
 
 GitHub Actions runs quality, security, migration and image smoke checks, then
 publishes a commit-tagged GHCR image on `main`. Production must use its digest.

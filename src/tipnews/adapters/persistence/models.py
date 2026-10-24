@@ -50,3 +50,11 @@ class JobRow(Base):
     __tablename__ = "jobs"
     name: Mapped[str] = mapped_column(String(80), primary_key=True)
     last_attempt: Mapped[int] = mapped_column(Integer)
+
+
+class InferenceUsageRow(Base):
+    __tablename__ = "inference_usage"
+    day: Mapped[str] = mapped_column(String(10), primary_key=True)
+    requests: Mapped[int] = mapped_column(Integer, default=0)
+    input_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    output_tokens: Mapped[int] = mapped_column(Integer, default=0)

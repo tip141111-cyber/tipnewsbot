@@ -18,37 +18,46 @@ def local_at(day: date, value: time, timezone: tzinfo | None) -> datetime:
 
 def next_delivery(now: datetime, settings: Settings) -> datetime:
     delivery = local_at(now.date(), settings.digest_time, now.tzinfo)
-    return delivery if now <= delivery else delivery + timedelta(days=1)
+    # A catch-up edition must be delivered today, not expired before tomorrow's send.
+    return max(now, delivery)
+
+
+async def generation_cycle(
+    settings: Settings,
+    store: Store,
+    pipeline: Pipeline,
+    now: datetime,
+    *,
+    first_cycle: bool = False,
+) -> None:
+    stamp = int(now.timestamp())
+    midnight = local_at(now.date(), time.min, now.tzinfo)
+    if await store.job_due("collect", stamp, settings.collect_interval_seconds):
+        await pipeline.collect()
+    if first_cycle or await store.job_due("prepare", stamp, 900):
+        await pipeline.prepare(
+            midnight,
+            deliver_at=next_delivery(now, settings),
+            resume=now < local_at(now.date(), settings.digest_time, now.tzinfo),
+        )
+    weather_time = local_at(now.date(), settings.weather_refresh_time, now.tzinfo)
+    if now >= weather_time and await store.digest(now.date().isoformat()) is not None:
+        # Compare against this calendar day's midnight, not a rolling 24-hour interval.
+        elapsed_today = stamp - int(midnight.timestamp()) + 1
+        if await store.job_due("weather", stamp, elapsed_today):
+            await pipeline.refresh_weather(now.date())
+    if await store.job_due("cleanup", stamp, 86400):
+        cutoff = now - timedelta(days=settings.retention_days)
+        await store.cleanup(int(cutoff.timestamp()), cutoff.date().isoformat())
 
 
 async def generation_loop(settings: Settings, store: Store, pipeline: Pipeline) -> None:
     first_cycle = True
     while True:
         now = datetime.now(ZoneInfo(settings.timezone))
-        stamp = int(now.timestamp())
         try:
-            if await store.job_due("collect", stamp, settings.collect_interval_seconds):
-                await pipeline.collect()
-
-            if first_cycle:
-                await pipeline.prepare(now, deliver_at=next_delivery(now, settings))
-                first_cycle = False
-
-            midnight = local_at(now.date(), time.min, now.tzinfo)
-            if midnight <= now < midnight + timedelta(hours=1):
-                if await store.job_due("prepare", stamp, 900):
-                    await pipeline.prepare(
-                        midnight,
-                        deliver_at=local_at(now.date(), settings.digest_time, now.tzinfo),
-                    )
-
-            weather_time = local_at(now.date(), settings.weather_refresh_time, now.tzinfo)
-            if now >= weather_time:
-                if await store.job_due("weather", stamp, 86400):
-                    await pipeline.refresh_weather(now.date())
-            if await store.job_due("cleanup", stamp, 86400):
-                cutoff = now - timedelta(days=settings.retention_days)
-                await store.cleanup(int(cutoff.timestamp()), cutoff.date().isoformat())
+            await generation_cycle(settings, store, pipeline, now, first_cycle=first_cycle)
+            first_cycle = False
         except Exception as exc:
             logger.error("generation_cycle_failed error=%s", type(exc).__name__)
         await asyncio.sleep(30)

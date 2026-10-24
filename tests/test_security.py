@@ -64,3 +64,17 @@ def test_legacy_english_digest_is_not_shown() -> None:
         "Source",
     )
     assert render_digest("2026-10-04", [item], {Topic.WORLD}) is None
+
+
+def test_gemini_key_redaction() -> None:
+    key = "AIza" + "synthetic_" * 5
+    for message in (
+        key,
+        "x-goog-api-key: synthetic-key",
+        "{'x-goog-api-key': 'synthetic-key'}",
+        "TIPNEWS_GEMINI_API_KEY=synthetic-key",
+        "https://example.org/?key=synthetic-key&other=yes",
+    ):
+        record = logging.LogRecord("test", logging.ERROR, "", 0, message, (), None)
+        output = RedactingFormatter("%(message)s").format(record)
+        assert key not in output and "synthetic-key" not in output

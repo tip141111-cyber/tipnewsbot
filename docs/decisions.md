@@ -12,7 +12,7 @@
 
 ## Pending
 
-- Repository remote (being created by owner).
+- Repository remote is configured: `tip141111-cyber/tipnewsbot` (public).
 - Telegram bot token supplied as a local/server secret file, never in chat.
 - Model quality/resource benchmark and final model artifact pin.
 - Final source approval for world news, Ryazan and markets; feed access != licensing.

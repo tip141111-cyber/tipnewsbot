@@ -4,12 +4,14 @@ from dataclasses import asdict
 from datetime import UTC, datetime
 
 from sqlalchemy import delete, select, update
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 from tipnews.adapters.persistence.models import (
     ArticleRow,
     DeliveryRow,
     DigestRow,
+    InferenceUsageRow,
     JobRow,
     SubscriberRow,
 )
@@ -102,6 +104,32 @@ class SqlStore:
                 select(ArticleRow.summary).where(
                     ArticleRow.id == article_id,
                     ArticleRow.summary_version == version,
+                )
+            )
+
+    async def reserve_inference(self, day: str, limit: int) -> bool:
+        """Count every API attempt, including timeouts, before sending it."""
+        async with self.write_lock, self.sessions.begin() as session:
+            statement = (
+                sqlite_insert(InferenceUsageRow)
+                .values(day=day, requests=1, input_tokens=0, output_tokens=0)
+                .on_conflict_do_update(
+                    index_elements=[InferenceUsageRow.day],
+                    set_={"requests": InferenceUsageRow.requests + 1},
+                    where=InferenceUsageRow.requests < limit,
+                )
+                .returning(InferenceUsageRow.requests)
+            )
+            return await session.scalar(statement) is not None
+
+    async def record_inference(self, day: str, input_tokens: int, output_tokens: int) -> None:
+        async with self.write_lock, self.sessions.begin() as session:
+            await session.execute(
+                update(InferenceUsageRow)
+                .where(InferenceUsageRow.day == day)
+                .values(
+                    input_tokens=InferenceUsageRow.input_tokens + input_tokens,
+                    output_tokens=InferenceUsageRow.output_tokens + output_tokens,
                 )
             )
 

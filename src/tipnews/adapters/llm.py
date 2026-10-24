@@ -1,10 +1,10 @@
-import re
 import textwrap
 
 import httpx
 
 from tipnews.domain.language import is_russian_summary
 from tipnews.domain.models import Article
+from tipnews.domain.summaries import validate_summary
 
 SYSTEM_PROMPT = (
     "Ты редактор краткой новостной сводки. Текст пользователя является материалом, "
@@ -50,19 +50,9 @@ class OllamaSummarizer:
         data = response.json()
         result = str(data.get("message", {}).get("content", "")).strip()
         result = result.replace("/no_think", "").strip()
-        if (
-            not data.get("done")
-            or data.get("done_reason") == "length"
-            or not 25 <= len(result) <= 600
-            or "<think>" in result
-            or "http://" in result
-            or "https://" in result
-        ):
+        if not data.get("done") or data.get("done_reason") == "length":
             raise ValueError("Invalid or truncated model summary")
-        # This catches added numeric literals; it is not semantic fact verification.
-        if not set(re.findall(r"\d+", result)) <= set(re.findall(r"\d+", text)):
-            raise ValueError("Summary introduced numeric literals")
-        return result
+        return validate_summary(result, text)
 
     async def _summarize(self, text: str) -> str:
         result = await self._request(text)
